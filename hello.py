@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from datetime import date
 
 # create a flask app
 app = Flask(__name__)
@@ -15,6 +15,18 @@ app.config['SECRET_KEY'] = 'xtransparent zozilla'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+
+# json code
+@app.route('/date')
+def get_current_date():
+    goal_car = {
+        "brand": "Mercedes",
+        "model": "cls a-limopusine",
+        "price": "55896785"
+    }
+    return goal_car
+
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +59,12 @@ class UserForm(FlaskForm):
     favourite_color = StringField('Favourite Color')
     password_hash = PasswordField('Password', validators=[DataRequired(), EqualTo('password_hash2', message='Password must match!')])
     password_hash2 = PasswordField('Confirm Password', validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+# create a form for input 
+class PasswordForm(FlaskForm):
+    email = StringField('Your Email:', validators=[DataRequired()])
+    password_hash = PasswordField('Your Password:', validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -137,6 +155,39 @@ def page_not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 505
+
+
+@app.route('/test_pw', methods=['GET','POST'])
+def test_pw():
+    email = None
+    password = None
+    pw_to_check = None
+    passed = None
+    form = PasswordForm()
+    
+    
+    # validate form
+    if form.validate_on_submit():
+        email =form.email.data
+        password = form.password_hash.data
+        
+        form.email.data = ''
+        form.password_hash.data = ''
+        
+        pw_to_check = Users.query.filter_by(email=email).first()
+        
+        # flash("Form Submitted Successfully.")
+        
+        # checked hashed password
+        passed = check_password_hash(pw_to_check.password_hash, password)
+        
+    return render_template('test_pw.html', 
+                            email=email, 
+                            password=password,
+                            form= form,
+                            passed = passed,
+                            pw_to_check = pw_to_check
+                        )
 
 
 @app.route('/name', methods=['GET','POST'])
