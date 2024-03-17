@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
 
 from wtforms.widgets import TextArea
+from flask_login import UserMixin, login_user, logout_user, LoginManager, login_required, current_user
 
 # create a flask app
 app = Flask(__name__)
@@ -18,6 +19,71 @@ app.config['SECRET_KEY'] = 'xtransparent zozilla'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Users.query.get(int(user_id))
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Username:', validators=[DataRequired()])
+    password = PasswordField('Password:', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+@app.route('/dashboard', methods=['POST', 'GET'])
+@login_required
+def dashbaord():
+    form = UserForm()
+    id = current_user.id
+    name_to_update = Users.query.get_or_404(id)
+    if request.method == 'POST':
+        name_to_update.name = request.form['name']
+        name_to_update.email = request.form['email']
+        name_to_update.favourite_color = request.form['favourite_color']
+        name_to_update.username = request.form['username']
+        try:
+            db.session.commit()
+            flash('User updated Successfully.')
+            return render_template('dashboard.html', 
+                                    form=form, 
+                                    name_to_update = name_to_update)
+        except:
+            flash('Error. something went wrong')
+            return render_template('dashboard.html', form=form, name_to_update=name_to_update, id=id )
+    else:
+        return render_template('dashboard.html', form=form, name_to_update=name_to_update, id=id)
+    
+    return render_template('dashboard.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(username=form.username.data).first()
+        if user:
+            if check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                flash('Login Successfull')
+                return redirect(url_for('dashbaord'))
+            else:
+                flash('Wrong Password. Please Try Again.')        
+        else:
+            flash('Thats User Doesnt Exists.')
+    return render_template('login.html', form=form)
+
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    flash('You are Logged Out!')
+    return redirect(url_for('login'))
 
 # json code
 @app.route('/date')
@@ -62,6 +128,7 @@ def post(id):
 
 
 @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_post(id):
     post = Posts.query.get_or_404(id)
     form = PostForm()
@@ -99,6 +166,7 @@ def delete_post(id):
 
 
 @app.route('/add-post', methods=['GET', 'POST'])
+@login_required
 def add_post():
     form = PostForm()
     if form.validate_on_submit():
@@ -115,8 +183,9 @@ def add_post():
     return render_template('add_post.html', form=form)
 
 
-class Users(db.Model):
+class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), nullable=False, unique=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
     favourite_color = db.Column(db.String(120))
@@ -141,6 +210,7 @@ class Users(db.Model):
     
 class UserForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
+    username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired()])
     favourite_color = StringField('Favourite Color')
     password_hash = PasswordField('Password', validators=[DataRequired(), EqualTo('password_hash2', message='Password must match!')])
@@ -183,6 +253,7 @@ def update(id):
         name_to_update.name = request.form['name']
         name_to_update.email = request.form['email']
         name_to_update.favourite_color = request.form['favourite_color']
+        name_to_update.username = request.form['username']
         try:
             db.session.commit()
             flash('User updated Successfully.')
@@ -191,7 +262,7 @@ def update(id):
                                     name_to_update = name_to_update)
         except:
             flash('Error. something went wrong')
-            return render_template('update.html', form=form, name_to_update=name_to_update )
+            return render_template('update.html', form=form, name_to_update=name_to_update, id=id )
     else:
         return render_template('update.html', form=form, name_to_update=name_to_update, id=id)
 
@@ -205,13 +276,14 @@ def add_user():
         user = Users.query.filter_by(email=form.email.data).first()
         if user is None:
             hashed_pw = generate_password_hash(form.password_hash.data)
-            user = Users(name=form.name.data, email=form.email.data, 
+            user = Users(username=form.username.data, name=form.name.data, email=form.email.data, 
                             favourite_color=form.favourite_color.data,
                             password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
+        form.username.data = ''
         form.email.data = ''
         form.favourite_color.data = ''
         form.password_hash.data = ''
