@@ -8,6 +8,8 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
 
+from wtforms.widgets import TextArea
+
 # create a flask app
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/users_db'
@@ -28,6 +30,42 @@ def get_current_date():
     return goal_car
 
 
+class Posts(db.Model):
+    __tablename__ = 'posts'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    title = db.Column(db.String(125), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author = db.Column(db.String(125))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    slug =  db.Column(db.String(255))
+    
+    
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = StringField('Content', validators=[DataRequired()], widget=TextArea())
+    author = StringField('Author', validators=[DataRequired()])
+    slug = StringField('Slug', validators=[DataRequired()])
+    submit = SubmitField("Submit")
+    
+    
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Posts(title= form.title.data, content=form.content.data ,author=form.author.data, slug=form.slug.data)
+        form.title.data = ''
+        form.content.data = ''
+        form.author.data = ''
+        form.slug.data = ''
+        
+        db.session.add(post)
+        db.session.commit()
+        
+        flash('Blog Added Successfully!')
+    return render_template('add_post.html', form=form)
+
+
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -35,7 +73,6 @@ class Users(db.Model):
     favourite_color = db.Column(db.String(120))
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     password_hash = db.Column(db.String(200))
-    
     
     
     @property
