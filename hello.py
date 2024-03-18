@@ -9,6 +9,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_ckeditor import CKEditor
+from werkzeug.utils import secure_filename
+import uuid as uuid
+import os
 
 
 # create a flask app
@@ -74,6 +77,12 @@ def dashbaord():
         name_to_update.favourite_color = request.form['favourite_color']
         name_to_update.username = request.form['username']
         name_to_update.about_author = request.form['about_author']
+        name_to_update.profile_pic = request.files['profile_pic']
+        pic_filename = secure_filename(name_to_update.profile_pic.filename)
+        # set uid
+        pic_name = str(uuid.uuid1()) + '_' + pic_filename
+        name_to_update.profile_pic = pic_name
+        
         try:
             db.session.commit()
             flash('User updated Successfully.')
@@ -207,19 +216,25 @@ def add_post():
 
 
 @app.route('/delete/<int:id>')
+@login_required
 def delete(id):
-    user_to_delete = Users.query.get_or_404(id)
-    name = None
-    form = UserForm()
-    try:
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        flash('User deleted Successfully!')
-        our_users=Users.query.order_by(Users.date_added)
-        return render_template('add_user.html', form=form, name=name, our_users=our_users)
-    except:
-        flash('there was a problem deleteing user.')
-        return render_template('add_user.html', form=form, name=name, our_users=our_users)
+    if id == current_user.id:        
+        user_to_delete = Users.query.get_or_404(id)
+        name = None
+        form = UserForm()
+        try:
+            db.session.delete(user_to_delete)
+            db.session.commit()
+            flash('User deleted Successfully!')
+            our_users=Users.query.order_by(Users.date_added)
+            return render_template('add_user.html', form=form, name=name, our_users=our_users)
+        except:
+            flash('there was a problem deleteing user.')
+            return render_template('add_user.html', form=form, name=name, our_users=our_users)
+    else:
+        flash('Sorry! You cant delete this user.')
+        return redirect(url_for('dashboard'))
+        
 
 
 @app.route('/update/<int:id>', methods=['GET','POST'])
@@ -350,6 +365,7 @@ class Users(db.Model, UserMixin):
     favourite_color = db.Column(db.String(120))
     about_author = db.Column(db.Text(500), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
+    profile_pic = db.Column(db.String(120), nullable=True)
     password_hash = db.Column(db.String(200))
     posts = db.relationship('Posts', backref='poster')
     
