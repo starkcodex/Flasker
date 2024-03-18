@@ -10,7 +10,7 @@
 
 {% endfor %} 
 
-<h3>Blog Posts</h3>
+<h3>Edit Posts</h3>
 <hr>
 <br/>
 
@@ -38,6 +38,9 @@
         
                         {{ form.submit(class="btn btn-secondary") }}
                     </form>
+
+                    {{ ckeditor.load() }}
+                    {{ ckeditor.config(name='content') }}
 
                 </div> 
 

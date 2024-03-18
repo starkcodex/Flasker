@@ -12,28 +12,41 @@
 
 
         <h3>Dashboard</h3>
-        <hr>
+        <br/>
 
         <div class="card shadow">
             <h5 class="card-header"> {{ current_user.name }}</h5>
             <div class="card-body">
-                <h5 class="card-title">Welcome to Dashboard</h5>
-                <hr>
+
                 <p class="card-text">
-                    <strong>Name:</strong> {{ current_user.name }}<br />
-                    <strong>Username:</strong> {{ current_user.username }}<br />
-                    <strong>User Id:</strong> {{ current_user.id }}<br />
-                    <strong>Email</strong> {{ current_user.email }}<br />
-                    <strong>Favourite Color: </strong> {{ current_user.favourite_color }}<br />
-                    <strong>Date Joined: </strong> {{ current_user.date_added }}<br />
-            
-                </p>
-                <a href="{{ url_for ('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
 
-                <a href="{{ url_for('update', id=current_user.id )}}" class="btn btn-secondary btn-sm">Update Profile</a>
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-8">
+                                    <strong>Name:</strong> {{ current_user.name }}<br/>
+                                    <strong>Username:</strong> {{ current_user.username }}<br/>
+                                    <strong>User Id:</strong> {{ current_user.id }}<br/>
+                                    <strong>Email</strong> {{ current_user.email }}<br/>
+                                    <strong>Favourite Color: </strong> {{ current_user.favourite_color }}<br/>
+                                    <strong>About Author: </strong> {{ current_user.about_author }}<br/>  
+                                    <strong>Date Joined: </strong> {{ current_user.date_added }}<br/>                          
 
-                <a href="{{ url_for('delete', id=current_user.id)}}" class="btn btn-danger btn-sm">Delete</a>
-            </div>
+
+                            </p>
+                                <a href="{{ url_for ('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
+                                <a href="{{ url_for('update', id=current_user.id )}}" 
+                                    class="btn btn-secondary btn-sm">Update Profile</a>
+                                <a href="{{ url_for('delete', id=current_user.id)}}" 
+                                    class="btn btn-danger btn-sm">Delete</a>
+                                    
+                                </div>
+                                    <div class="col-4">
+                                        <img src="{{ url_for ('static', filename='images/default_profile.jpg')}}" width="200" align="right">
+                                    </div>
+                                </div>
+        </div>
+                        
+                    </div>
         </div>
 
         <br/>
@@ -60,6 +73,16 @@
 
                     {{ form.favourite_color.label ( class="form-label" ) }}   
                     {{ form.favourite_color( class="form-control" ,value=name_to_update.favourite_color) }}
+                    <br/>
+
+                    {{ form.about_author.label ( class="form-label" ) }}   
+                    <!-- {{ form.about_author( class="form-control" ,value=name_to_update.about_author) }} -->
+                        
+                    <textarea name="about_author" class="form-control">
+
+                    {{ name_to_update.about_author}}
+                    </textarea>
+                    
                     <br/>
                     {{ form.submit(class="btn btn-secondary btn-sm") }}
 
