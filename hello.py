@@ -8,6 +8,8 @@ from webforms import LoginForm, PostForm, UserForm, PasswordForm, NamerForm, Sea
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_ckeditor import CKEditor
+
 
 # create a flask app
 app = Flask(__name__)
@@ -17,6 +19,7 @@ app.config['SECRET_KEY'] = 'xtransparent zozilla'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+ckeditor = CKEditor(app)
 
 
 login_manager = LoginManager()
@@ -47,6 +50,18 @@ def search():
                                         form=form, searched= post.searched, posts=posts)
 
 
+
+@app.route('/admin')
+@login_required
+def admin():
+    id = current_user.id
+    if id == 18:
+        return render_template('admin.html')
+    else:
+        flash('Sorry only admin can access.')
+        return redirect(url_for('dashbaord'))
+
+
 @app.route('/dashboard', methods=['POST', 'GET'])
 @login_required
 def dashbaord():
@@ -58,6 +73,7 @@ def dashbaord():
         name_to_update.email = request.form['email']
         name_to_update.favourite_color = request.form['favourite_color']
         name_to_update.username = request.form['username']
+        name_to_update.about_author = request.form['about_author']
         try:
             db.session.commit()
             flash('User updated Successfully.')
@@ -332,6 +348,7 @@ class Users(db.Model, UserMixin):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
     favourite_color = db.Column(db.String(120))
+    about_author = db.Column(db.Text(500), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     password_hash = db.Column(db.String(200))
     posts = db.relationship('Posts', backref='poster')
