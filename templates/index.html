@@ -3,18 +3,26 @@
 
 {% block content %}
 
-<div>
 
-        <h3> Welcome to Home Page!</h3>
-        <hr>
-        <p>Please Read On boarding Guidelines.</p>
-        <p>Pricing details are given below.</p>
-        <br>
+        <section id="intro">
+                <div class="container-lg">
+                        <div class="row justify-content-center align-items-center">
+                                <div class="col-md-5 text-center text-md-start">
+                                        <h2>
+                                                <div class="display-2">Invik Blogs.</div>
+                                                <div class="display-5 text-muted">Discover Technology, Thinkning and expertise from writers on any Topic.</div>
+                                        </h2>
+                                        <p class="lead my-4 text-muted">Stay technologists</p>
+                                        <a href="#" class="btn btn-secondary">Start Exploring</a>
+                                </div>
 
-        <p>My name is {{ first_name}}</p>
+                                <div class="col-md-5 text-center d-none d-md-block">
+                                        <img class="img-fluid" src="/static/images/blog_pic.jpg" alt="blog cover" width="800">
+                                </div>
 
-</div>
-
+                        </div>
+                </div>
+        </section>
 
 
 {% endblock %}
